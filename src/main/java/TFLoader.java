@@ -1,7 +1,6 @@
-import org.tensorflow.SavedModelBundle;
-import org.tensorflow.Session;
-import org.tensorflow.Tensor;
-import org.tensorflow.TensorFlow;
+import org.tensorflow.*;
+import org.tensorflow.op.Ops;
+import org.tensorflow.op.core.Constant;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
@@ -42,6 +41,13 @@ public class TFLoader {
                         .copyTo(new long[1]);
                 System.out.println(res[0]);
             }
+        }
+
+        try (EagerSession session = EagerSession.create()) {
+            Ops tf = Ops.create(session);
+
+            Constant<Long> a = tf.constant(10L);
+            System.out.println(a.asOutput().tensor().longValue());
         }
     }
 }

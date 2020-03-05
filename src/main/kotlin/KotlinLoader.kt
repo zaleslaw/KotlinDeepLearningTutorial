@@ -1,15 +1,16 @@
-import org.tensorflow.SavedModelBundle
-import org.tensorflow.Tensor
-import org.tensorflow.TensorFlow
+import org.tensorflow.*
 import java.util.*
-import java.util.function.Function
+
+const val IMAGE_PATH = "src/main/resources/datasets/test/t10k-images-idx3-ubyte"
+
+const val LABEL_PATH = "src/main/resources/datasets/test/t10k-labels-idx1-ubyte"
 
 fun main() {
     println(TensorFlow.version())
 
     val images = MnistUtils.mnistAsList(
-        "src/main/resources/datasets/test/t10k-images-idx3-ubyte",
-        "src/main/resources/datasets/test/t10k-labels-idx1-ubyte",
+        IMAGE_PATH,
+        LABEL_PATH,
         Random(0),
         10000
     )
@@ -22,14 +23,23 @@ fun main() {
         return Tensor.create(reshaped)
     }
 
-    exec(images, ::reshape)
+    predictOnImagesWithTensor(images, ::reshape)
 }
 
-private fun exec(images: MutableList<MnistUtils.MnistLabeledImage>, reshape: (DoubleArray) -> Tensor<*>?) {
+private fun predictOnImagesWithTensor(
+    images: MutableList<MnistUtils.MnistLabeledImage>,
+    reshape: (DoubleArray) -> Tensor<*>?
+) {
     SavedModelBundle.load("src/main/resources/model1", "serve").use { bundle ->
+        val session = bundle.session()
+
+        val graph = bundle.graph()
+
+        printTFGraph(graph)
+
         var counter = 0
+
         for (image in images) {
-            val session = bundle.session()
             val runner = session.runner()
             val result = runner.feed("Placeholder", reshape(image.pixels))
                 .fetch("ArgMax")
@@ -37,8 +47,30 @@ private fun exec(images: MutableList<MnistUtils.MnistLabeledImage>, reshape: (Do
                 .copyTo(LongArray(1))
             if (result[0].toInt() == image.label)
                 counter++
+
         }
         println(counter)
         println(images.size)
+
+        session.close()
     }
 }
+
+private fun printTFGraph(graph: Graph) {
+    val operations = graph.operations()
+
+    while (operations.hasNext()) {
+        val operation = operations.next() as GraphOperation
+        println("Name: " + operation.name() + "; Type: " + operation.type() + "; Out #tensors:  " + operation.numOutputs())
+        /*  for (i in 0 until operation.numOutputs()){
+              println("       " + i + ":  " + operation.output<Any?>(i))
+          }*/
+    }
+}
+
+//private fun printTFGraphViaRunner(runner: Session.Runner) {
+//    val tensors = runner.run()
+//    for(tensor in tensors){
+//        println("Data type: " + tensor.dataType() + " Dimensions:" + tensor.numDimensions() + " " + tensor.shape().toString())
+//    }
+//}
