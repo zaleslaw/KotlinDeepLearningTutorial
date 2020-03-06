@@ -1,7 +1,4 @@
-import jdk.internal.util.xml.impl.Input
-import org.tensorflow.DataType
 import org.tensorflow.EagerSession
-import org.tensorflow.Shape
 import org.tensorflow.TensorFlow
 import org.tensorflow.op.Ops
 
