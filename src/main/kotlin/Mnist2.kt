@@ -1,17 +1,13 @@
 import org.tensorflow.*
 import org.tensorflow.op.Ops
-import org.tensorflow.op.core.Constant
 import org.tensorflow.op.core.Placeholder
 import org.tensorflow.op.core.Variable
 import java.util.*
 
-
 private const val VALIDATION_SIZE = 0
 private const val TRAINING_BATCH_SIZE = 100
 
-
 fun main() {
-
     val dataset = ImageDataset.create(VALIDATION_SIZE)
 
     println(TensorFlow.version())
@@ -54,9 +50,7 @@ fun main() {
             ), constArray(tf, 0)
         )
 
-
         val gradients = tf.gradients(crossEntropy, Arrays.asList(weights, biases))
-//        val alpha = tf.constant(floatArrayOf(0.2f).first())
         val alpha = tf.constant(0.2f)
         val weightGradientDescent =
             tf.train.applyGradientDescent(weights, alpha, gradients.dy<Float>(0))
@@ -93,6 +87,7 @@ fun main() {
                     })
                 })
             }
+
             // Test the graph
             val testBatch: ImageBatch = dataset.testBatch()
             Tensor.create(testBatch.shape(784), testBatch.images()).use({ testImages ->
