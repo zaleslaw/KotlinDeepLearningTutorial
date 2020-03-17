@@ -7,6 +7,7 @@ import java.util.*
 private const val VALIDATION_SIZE = 0
 private const val TRAINING_BATCH_SIZE = 100
 
+
 fun main() {
     val dataset = ImageDataset.create(VALIDATION_SIZE)
 
@@ -50,7 +51,7 @@ fun main() {
             ), constArray(tf, 0)
         )
 
-        val gradients = tf.gradients(crossEntropy, Arrays.asList(weights, biases))
+        val gradients = tf.gradients(crossEntropy, listOf(weights, biases))
         val alpha = tf.constant(0.2f)
         val weightGradientDescent =
             tf.train.applyGradientDescent(weights, alpha, gradients.dy<Float>(0))
@@ -76,29 +77,29 @@ fun main() {
             val batchIter: ImageDataset.ImageBatchIterator = dataset.trainingBatchIterator(TRAINING_BATCH_SIZE)
             while (batchIter.hasNext()) {
                 val batch: ImageBatch = batchIter.next()
-                Tensor.create(batch.shape(784), batch.images()).use({ batchImages ->
-                    Tensor.create(batch.shape(10), batch.labels()).use({ batchLabels ->
+                Tensor.create(batch.shape(784), batch.images()).use { batchImages ->
+                    Tensor.create(batch.shape(10), batch.labels()).use { batchLabels ->
                         session.runner()
                             .addTarget(weightGradientDescent)
                             .addTarget(biasGradientDescent)
                             .feed(images.asOutput(), batchImages)
                             .feed(labels.asOutput(), batchLabels)
                             .run()
-                    })
-                })
+                    }
+                }
             }
 
             // Test the graph
             val testBatch: ImageBatch = dataset.testBatch()
-            Tensor.create(testBatch.shape(784), testBatch.images()).use({ testImages ->
-                Tensor.create(testBatch.shape(10), testBatch.labels()).use({ testLabels ->
+            Tensor.create(testBatch.shape(784), testBatch.images()).use { testImages ->
+                Tensor.create(testBatch.shape(10), testBatch.labels()).use { testLabels ->
                     session.runner()
                         .fetch(accuracy)
                         .feed(images.asOutput(), testImages)
                         .feed(labels.asOutput(), testLabels)
                         .run()[0].use { value -> println("Accuracy: " + value.floatValue()) }
-                })
-            })
+                }
+            }
         }
     }
 }
