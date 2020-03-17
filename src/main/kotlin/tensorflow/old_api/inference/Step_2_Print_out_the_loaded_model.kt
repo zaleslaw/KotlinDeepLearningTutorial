@@ -4,12 +4,14 @@ import org.tensorflow.*
 import util.MnistUtils
 import java.util.*
 
-const val IMAGE_PATH = "src/main/resources/datasets/test/t10k-images-idx3-ubyte"
-const val LABEL_PATH = "src/main/resources/datasets/test/t10k-labels-idx1-ubyte"
-const val PATH_TO_MODEL = "src/main/resources/model1"
 
 fun main() {
-    val images = MnistUtils.mnistAsList(IMAGE_PATH, LABEL_PATH, Random(0), 10000)
+    val images = MnistUtils.mnistAsList(
+        IMAGE_PATH,
+        LABEL_PATH,
+        Random(0),
+        10000
+    )
 
     fun reshape(doubles: DoubleArray): Tensor<*>? {
         val reshaped = Array(
@@ -29,6 +31,10 @@ private fun predictOnImagesWithTensor(
     SavedModelBundle.load(PATH_TO_MODEL, "serve").use { bundle ->
         val session = bundle.session()
 
+        val graph = bundle.graph()
+
+        printTFGraph(graph)
+
         var counter = 0
 
         for (image in images) {
@@ -47,3 +53,22 @@ private fun predictOnImagesWithTensor(
         session.close()
     }
 }
+
+private fun printTFGraph(graph: Graph) {
+    val operations = graph.operations()
+
+    while (operations.hasNext()) {
+        val operation = operations.next() as GraphOperation
+        println("Name: " + operation.name() + "; Type: " + operation.type() + "; Out #tensors:  " + operation.numOutputs())
+        /*  for (i in 0 until operation.numOutputs()){
+              println("       " + i + ":  " + operation.output<Any?>(i))
+          }*/
+    }
+}
+
+//private fun printTFGraphViaRunner(runner: Session.Runner) {
+//    val tensors = runner.run()
+//    for(tensor in tensors){
+//        println("Data type: " + tensor.dataType() + " Dimensions:" + tensor.numDimensions() + " " + tensor.shape().toString())
+//    }
+//}
