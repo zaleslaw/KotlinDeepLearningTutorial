@@ -1,3 +1,5 @@
+package tensorflow.old_api.training.util
+
 import java.nio.FloatBuffer
 
 class ImageBatch internal constructor(
@@ -20,5 +22,4 @@ class ImageBatch internal constructor(
     fun size(): Int {
         return numElements
     }
-
 }

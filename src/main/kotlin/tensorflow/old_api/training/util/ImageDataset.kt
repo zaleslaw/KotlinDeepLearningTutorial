@@ -1,3 +1,5 @@
+package tensorflow.old_api.training.util
+
 import java.io.DataInputStream
 import java.io.IOException
 import java.nio.FloatBuffer
@@ -26,8 +28,16 @@ class ImageDataset private constructor(
         override fun next(): ImageBatch {
             val size = Math.min(batchSize, images.size - batchStart)
             val batch = ImageBatch(
-                serializeToBuffer(images, batchStart, size),
-                serializeToBuffer(labels, batchStart, size),
+                serializeToBuffer(
+                    images,
+                    batchStart,
+                    size
+                ),
+                serializeToBuffer(
+                    labels,
+                    batchStart,
+                    size
+                ),
                 size
             )
             batchStart += batchSize
@@ -55,8 +65,16 @@ class ImageDataset private constructor(
 
     fun testBatch(): ImageBatch {
         return ImageBatch(
-            serializeToBuffer(testImages, 0, testImages.size),
-            serializeToBuffer(testLabels, 0, testLabels.size),
+            serializeToBuffer(
+                testImages,
+                0,
+                testImages.size
+            ),
+            serializeToBuffer(
+                testLabels,
+                0,
+                testLabels.size
+            ),
             testImages.size
         )
     }
@@ -65,17 +83,23 @@ class ImageDataset private constructor(
         fun create(validationSize: Int): ImageDataset {
             return try {
                 val trainImages =
-                    extractImages(TRAIN_IMAGES_ARCHIVE)
-                val trainLabels = extractLabels(
-                    TRAIN_LABELS_ARCHIVE,
-                    NUM_CLASSES
-                )
+                    extractImages(
+                        TRAIN_IMAGES_ARCHIVE
+                    )
+                val trainLabels =
+                    extractLabels(
+                        TRAIN_LABELS_ARCHIVE,
+                        NUM_CLASSES
+                    )
                 val testImages =
-                    extractImages(TEST_IMAGES_ARCHIVE)
-                val testLabels = extractLabels(
-                    TEST_LABELS_ARCHIVE,
-                    NUM_CLASSES
-                )
+                    extractImages(
+                        TEST_IMAGES_ARCHIVE
+                    )
+                val testLabels =
+                    extractLabels(
+                        TEST_LABELS_ARCHIVE,
+                        NUM_CLASSES
+                    )
                 if (validationSize > 0) {
                     ImageDataset(
                         Arrays.copyOfRange(trainImages, validationSize, trainImages.size),
@@ -131,7 +155,10 @@ class ImageDataset private constructor(
             val imageBuffer = ByteArray(imageRows * imageCols)
             for (i in 0 until imageCount) {
                 archiveStream.readFully(imageBuffer)
-                images[i] = toNormalizedVector(imageBuffer)
+                images[i] =
+                    toNormalizedVector(
+                        imageBuffer
+                    )
             }
             return images
         }
@@ -152,7 +179,11 @@ class ImageDataset private constructor(
             val floats =
                 Array(labelCount) { FloatArray(10) }
             for (i in 0 until labelCount) {
-                floats[i] = toOneHotVector(10, labelBuffer[i])
+                floats[i] =
+                    toOneHotVector(
+                        10,
+                        labelBuffer[i]
+                    )
             }
             return floats
         }

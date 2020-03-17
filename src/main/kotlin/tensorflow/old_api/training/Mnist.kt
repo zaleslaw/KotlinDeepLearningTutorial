@@ -1,17 +1,19 @@
+package tensorflow.old_api.training
+
 import org.tensorflow.*
 import org.tensorflow.op.Ops
 import org.tensorflow.op.core.Placeholder
 import org.tensorflow.op.core.Variable
-import java.util.*
+import tensorflow.old_api.training.util.ImageBatch
+import tensorflow.old_api.training.util.ImageDataset
 
 private const val VALIDATION_SIZE = 0
 private const val TRAINING_BATCH_SIZE = 100
 
-
 fun main() {
-    val dataset = ImageDataset.create(VALIDATION_SIZE)
+    val dataset =
+        ImageDataset.create(VALIDATION_SIZE)
 
-    println(TensorFlow.version())
     Graph().use { graph ->
 
         val tf = Ops.create(graph)
@@ -74,7 +76,9 @@ fun main() {
                 .addTarget(biasesInit)
                 .run()
             // Train the graph
-            val batchIter: ImageDataset.ImageBatchIterator = dataset.trainingBatchIterator(TRAINING_BATCH_SIZE)
+            val batchIter: ImageDataset.ImageBatchIterator = dataset.trainingBatchIterator(
+                TRAINING_BATCH_SIZE
+            )
             while (batchIter.hasNext()) {
                 val batch: ImageBatch = batchIter.next()
                 Tensor.create(batch.shape(784), batch.images()).use { batchImages ->
@@ -105,3 +109,6 @@ fun main() {
 }
 
 
+fun constArray(tf: Ops, vararg i: Int): Operand<Int> {
+    return tf.constant(i)
+}

@@ -1,13 +1,13 @@
+package tensorflow.old_api.inference
+
 import org.tensorflow.*
+import util.MnistUtils
 import java.util.*
 
-const val IMAGE_PATH = "src/main/resources/datasets/test/t10k-images-idx3-ubyte"
-
-const val LABEL_PATH = "src/main/resources/datasets/test/t10k-labels-idx1-ubyte"
+const val IMAGE_PATH = "src/resources/datasets/test/t10k-images-idx3-ubyte"
+const val LABEL_PATH = "src/resources/datasets/test/t10k-labels-idx1-ubyte"
 
 fun main() {
-    println(TensorFlow.version())
-
     val images = MnistUtils.mnistAsList(
         IMAGE_PATH,
         LABEL_PATH,
@@ -30,7 +30,7 @@ private fun predictOnImagesWithTensor(
     images: MutableList<MnistUtils.MnistLabeledImage>,
     reshape: (DoubleArray) -> Tensor<*>?
 ) {
-    SavedModelBundle.load("src/main/resources/model1", "serve").use { bundle ->
+    SavedModelBundle.load("src/resources/model1", "serve").use { bundle ->
         val session = bundle.session()
 
         val graph = bundle.graph()

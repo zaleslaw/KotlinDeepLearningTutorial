@@ -1,21 +1,22 @@
+package tensorflow;
+
 import org.tensorflow.*;
 import org.tensorflow.op.Ops;
 import org.tensorflow.op.core.Constant;
+import util.MnistUtils;
 
 import java.io.IOException;
-import java.nio.FloatBuffer;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.function.Function;
 
-public class TFLoader {
+public class Example_1_TF_Inference {
     public static void main(String[] args) throws IOException {
         System.out.println(TensorFlow.version());
 
         List<MnistUtils.MnistLabeledImage> images = MnistUtils.mnistAsList(
-                "src/main/resources/datasets/t10k-images-idx3-ubyte",
-                "src/main/resources/datasets/t10k-labels-idx1-ubyte",
+                "src/tensorflow.old_api.tensorflow.old_api.tensorflow.old_api.graph.main/resources/datasets/t10k-images-idx3-ubyte",
+                "src/tensorflow.old_api.tensorflow.old_api.tensorflow.old_api.graph.main/resources/datasets/t10k-labels-idx1-ubyte",
                 new Random(0),
                 10000
         );
@@ -28,7 +29,7 @@ public class TFLoader {
         };
 
         // load the model Bundle
-        try (SavedModelBundle b = SavedModelBundle.load("src/main/resources/models", "serve")) {
+        try (SavedModelBundle b = SavedModelBundle.load("src/tensorflow.old_api.tensorflow.old_api.tensorflow.old_api.graph.main/resources/models", "serve")) {
             // create the session from the Bundle
             Session sess = b.session();
             Session.Runner runner = sess.runner();
