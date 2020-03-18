@@ -1,5 +1,7 @@
-package dl4j
+package dl4j.training
 
+import dl4j.DataUtilities
+import dl4j.MNIST_Example
 import org.datavec.api.io.labels.ParentPathLabelGenerator
 import org.datavec.api.split.FileSplit
 import org.datavec.image.loader.NativeImageLoader
@@ -46,7 +48,10 @@ fun main() {
             MNIST_Example.dataUrl,
             localFilePath
         )
-    ) MNIST_Example.log.debug("Data downloaded from {}", MNIST_Example.dataUrl)
+    ) MNIST_Example.log.debug(
+        "Data downloaded from {}",
+        MNIST_Example.dataUrl
+    )
     if (!File(MNIST_Example.basePath + "/mnist_png").exists()) DataUtilities.extractTarGz(
         localFilePath,
         MNIST_Example.basePath
