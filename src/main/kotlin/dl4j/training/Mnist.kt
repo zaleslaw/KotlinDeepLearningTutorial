@@ -9,6 +9,7 @@ import org.datavec.image.recordreader.ImageRecordReader
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.BackpropType
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.inputs.InputType
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer
@@ -21,7 +22,6 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
-import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
@@ -30,16 +30,37 @@ import org.nd4j.linalg.schedule.ScheduleType
 import java.io.File
 import java.util.*
 
-fun main() {
-    val height = 28L
-    val width = 28L
-    val channels = 1L // single channel for grayscale images
-    val outputNum = 10 // 10 digits classification
-    val batchSize = 54
-    val nEpochs = 3
-    val seed = 1234
-    val randNumGen = Random(seed.toLong())
+const val height = 28L
+const val width = 28L
+const val channels = 1L // single channel for grayscale images
+const val outputNum = 10 // 10 digits classification
+const val batchSize = 54
+const val nEpochs = 3
+const val seed = 1234
+val randNumGen = Random(seed.toLong())
 
+fun main() {
+    val (trainIter: DataSetIterator, testIter: DataSetIterator) = preprocessTrainTestDatasets()
+
+    val lrSchedule = setUpLearningRateSchedule()
+
+    val net = initNeuralNetwork(seed, lrSchedule, channels, outputNum)
+
+    println("Starting training")
+    // evaluation while training (the score should go down)
+    for (i in 0 until nEpochs) {
+        net.fit(trainIter)
+        println("Completed epoch $i")
+        val eval = net.evaluate<Evaluation>(testIter)
+        println(eval.stats())
+        trainIter.reset()
+        testIter.reset()
+    }
+
+    ModelSerializer.writeModel(net, File(MNIST_Example.basePath + "/minist-model.zip"), true)
+}
+
+private fun preprocessTrainTestDatasets(): Pair<DataSetIterator, DataSetIterator> {
     MNIST_Example.log.info("Data load and vectorization...")
 
     val localFilePath = MNIST_Example.basePath + "/mnist_png.tar.gz"
@@ -57,7 +78,6 @@ fun main() {
         MNIST_Example.basePath
     )
 
-
     // vectorization of train data
     val trainData = File(MNIST_Example.basePath + "/mnist_png/training")
     val trainSplit = FileSplit(trainData, NativeImageLoader.ALLOWED_FORMATS, randNumGen)
@@ -69,7 +89,7 @@ fun main() {
     val trainIter: DataSetIterator = RecordReaderDataSetIterator(trainRR, batchSize, 1, outputNum)
 
     // pixel values from 0-255 to 0-1 (min-max scaling)
-    val scaler: DataNormalization = ImagePreProcessingScaler(0.0, 1.0)
+    val scaler = ImagePreProcessingScaler(0.0, 1.0)
     scaler.fit(trainIter)
     trainIter.preProcessor = scaler
 
@@ -80,17 +100,41 @@ fun main() {
     testRR.initialize(testSplit)
     val testIter: DataSetIterator = RecordReaderDataSetIterator(testRR, batchSize, 1, outputNum)
     testIter.preProcessor = scaler // same normalization for better results
+    return Pair(trainIter, testIter)
+}
 
-
-    println("Starting training")
+private fun setUpLearningRateSchedule(): MutableMap<Int, Double> {
     val lrSchedule: MutableMap<Int, Double> = HashMap()
     lrSchedule[0] = 0.06 // iteration #, learning rate
     lrSchedule[200] = 0.05
     lrSchedule[600] = 0.028
     lrSchedule[800] = 0.0060
     lrSchedule[1000] = 0.001
+    return lrSchedule
+}
 
-    val conf = NeuralNetConfiguration.Builder()
+private fun initNeuralNetwork(
+    seed: Int,
+    lrSchedule: MutableMap<Int, Double>,
+    channels: Long,
+    outputNum: Int
+): MultiLayerNetwork {
+    val nnArchitecture = defineNeuralNetwork(seed, lrSchedule, channels, outputNum)
+
+    val net = MultiLayerNetwork(nnArchitecture)
+    net.init()
+    net.setListeners(ScoreIterationListener(10))
+    println("Total num of params:" + net.numParams())
+    return net
+}
+
+private fun defineNeuralNetwork(
+    seed: Int,
+    lrSchedule: MutableMap<Int, Double>,
+    channels: Long,
+    outputNum: Int
+): MultiLayerConfiguration? {
+    return NeuralNetConfiguration.Builder()
         .seed(seed.toLong())
         .l2(0.0005)
         .updater(Nesterovs(MapSchedule(ScheduleType.ITERATION, lrSchedule)))
@@ -145,22 +189,4 @@ fun main() {
             )
         ) // InputType.convolutional for normal image
         .backpropType(BackpropType.Standard).build()
-
-    val net = MultiLayerNetwork(conf)
-    net.init()
-    net.setListeners(ScoreIterationListener(10))
-    println("Total num of params:" + net.numParams())
-
-
-    // evaluation while training (the score should go down)
-    for (i in 0 until nEpochs) {
-        net.fit(trainIter)
-        println("Completed epoch $i")
-        val eval = net.evaluate<Evaluation>(testIter)
-        println(eval.stats())
-        trainIter.reset()
-        testIter.reset()
-    }
-
-    ModelSerializer.writeModel(net, File(MNIST_Example.basePath + "/minist-model.zip"), true)
 }
