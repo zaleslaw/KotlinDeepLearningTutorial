@@ -15,8 +15,8 @@ public class Example_1_TF_Inference {
         System.out.println(TensorFlow.version());
 
         List<MnistUtils.MnistLabeledImage> images = MnistUtils.mnistAsList(
-                "src/tensorflow.old_api.tensorflow.old_api.tensorflow.old_api.tensors.main/resources/datasets/t10k-images-idx3-ubyte",
-                "src/tensorflow.old_api.tensorflow.old_api.tensorflow.old_api.tensors.main/resources/datasets/t10k-labels-idx1-ubyte",
+                "src/tensorflow.old_api.tensors.main/resources/datasets/t10k-images-idx3-ubyte",
+                "src/tensorflow.old_api.tensors.main/resources/datasets/t10k-labels-idx1-ubyte",
                 new Random(0),
                 10000
         );

@@ -49,7 +49,7 @@ fun main() {
     val variableArr = variable.arr //We can get arrays directly from the variables
     println("Initial variable values:\n$variableArr")
 
-    //TODO: Error behaviour: Empty values
+    //TODO: Error behaviour: Empty values. Known issue is here https://github.com/eclipse/deeplearning4j-examples/issues/955
     val plusOneArr = graph.getArrForVarName("add")
     println("'plusOne' values:\n$plusOneArr")
 
