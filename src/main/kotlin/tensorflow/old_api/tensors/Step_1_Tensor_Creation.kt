@@ -1,4 +1,4 @@
-package tensorflow.old_api.graph
+package tensorflow.old_api.tensors
 
 import org.tensorflow.Tensor
 

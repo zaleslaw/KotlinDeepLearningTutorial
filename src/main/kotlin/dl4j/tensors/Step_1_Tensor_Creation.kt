@@ -3,7 +3,6 @@ package dl4j.tensors
 import org.nd4j.linalg.factory.Nd4j
 
 fun main() {
-
     // Rank 1 Tensor
     val rank1Tensor = Nd4j.create(10)
     println("DataType: " + rank1Tensor.dataType().name)
@@ -30,5 +29,4 @@ fun main() {
 
     val updatedMatrix = rank2Tensor.sub(10).div(100)
     println(updatedMatrix)
-
 }
