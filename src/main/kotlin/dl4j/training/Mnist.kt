@@ -40,6 +40,11 @@ const val seed = 1234
 val randNumGen = Random(seed.toLong())
 
 fun main() {
+    // Uncomment for beta-6 for ui component
+    /*val uiServer = UIServer.getInstance()
+    val statsStorage = InMemoryStatsStorage()
+    uiServer.attach(statsStorage)*/
+
     val (trainIter: DataSetIterator, testIter: DataSetIterator) = preprocessTrainTestDatasets()
 
     val lrSchedule = setUpLearningRateSchedule()
@@ -124,6 +129,7 @@ private fun initNeuralNetwork(
     val net = MultiLayerNetwork(nnArchitecture)
     net.init()
     net.setListeners(ScoreIterationListener(10))
+    //net.setListeners(StatsListener(statsStorage))
     println("Total num of params:" + net.numParams())
     return net
 }
