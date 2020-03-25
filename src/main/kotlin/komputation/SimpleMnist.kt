@@ -11,8 +11,9 @@ import com.komputation.optimization.historical.momentum
 import java.io.File
 import java.util.*
 
-
+// loads 55 000 observations due to github limitation with 100 mb max file size
 const val TRAIN_PATH = "src/main/resources/datasets/train/mnist_train.csv"
+
 const val TEST_PATH = "src/main/resources/datasets/test/mnist_test.csv"
 
 /**
