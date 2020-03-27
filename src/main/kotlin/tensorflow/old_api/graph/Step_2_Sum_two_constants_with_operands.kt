@@ -5,7 +5,7 @@ import org.tensorflow.Session
 import org.tensorflow.op.Ops
 
 /**
- * Defines the simplest Operand Graph.
+ * Defines the simplest Operand Graph: 10L + 5L via generated operands.
  */
 fun main() {
     Graph().use { g ->
