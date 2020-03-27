@@ -15,7 +15,7 @@ fun main() {
     }
 }
 
-private fun printTFGraph(graph: Graph) {
+fun printTFGraph(graph: Graph) {
     val operations = graph.operations()
 
     while (operations.hasNext()) {

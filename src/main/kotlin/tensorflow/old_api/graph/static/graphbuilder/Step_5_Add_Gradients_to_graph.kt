@@ -1,4 +1,4 @@
-package tensorflow.old_api.graph
+package tensorflow.old_api.graph.static.graphbuilder
 
 import org.apache.commons.lang3.ArrayUtils.toArray
 import org.tensorflow.*

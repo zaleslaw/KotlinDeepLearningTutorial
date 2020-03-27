@@ -1,4 +1,4 @@
-package tensorflow.old_api.graph
+package tensorflow.old_api.graph.static.operands
 
 import org.tensorflow.Graph
 import org.tensorflow.Session
