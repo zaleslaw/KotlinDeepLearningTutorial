@@ -1,4 +1,4 @@
-package tensorflow.old_api.graph
+package tensorflow.old_api.graph.eager
 
 import org.tensorflow.EagerSession
 import org.tensorflow.op.Ops
@@ -16,4 +16,3 @@ fun main() {
         println(addOps.asOutput().tensor().longValue())
     }
 }
-

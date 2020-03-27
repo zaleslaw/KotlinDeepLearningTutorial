@@ -30,14 +30,14 @@ import org.nd4j.linalg.schedule.ScheduleType
 import java.io.File
 import java.util.*
 
-const val height = 28L
-const val width = 28L
-const val channels = 1L // single channel for grayscale images
-const val outputNum = 10 // 10 digits classification
-const val batchSize = 54
-const val nEpochs = 3
-const val seed = 1234
-val randNumGen = Random(seed.toLong())
+private const val height = 28L
+private const val width = 28L
+private const val channels = 1L // single channel for grayscale images
+private const val outputNum = 10 // 10 digits classification
+private const val batchSize = 54
+private const val nEpochs = 3
+private const val seed = 1234
+private val randNumGen = Random(seed.toLong())
 
 fun main() {
     // Uncomment for beta-6 for ui component
@@ -49,7 +49,7 @@ fun main() {
 
     val lrSchedule = setUpLearningRateSchedule()
 
-    val net = initNeuralNetwork(seed, lrSchedule, channels, outputNum)
+    val net = initNeuralNetwork(lrSchedule)
 
     println("Starting training")
     // evaluation while training (the score should go down)
@@ -119,12 +119,9 @@ private fun setUpLearningRateSchedule(): MutableMap<Int, Double> {
 }
 
 private fun initNeuralNetwork(
-    seed: Int,
-    lrSchedule: MutableMap<Int, Double>,
-    channels: Long,
-    outputNum: Int
+    lrSchedule: MutableMap<Int, Double>
 ): MultiLayerNetwork {
-    val nnArchitecture = defineNeuralNetwork(seed, lrSchedule, channels, outputNum)
+    val nnArchitecture = defineNeuralNetwork(lrSchedule)
 
     val net = MultiLayerNetwork(nnArchitecture)
     net.init()
@@ -135,10 +132,7 @@ private fun initNeuralNetwork(
 }
 
 private fun defineNeuralNetwork(
-    seed: Int,
-    lrSchedule: MutableMap<Int, Double>,
-    channels: Long,
-    outputNum: Int
+    lrSchedule: MutableMap<Int, Double>
 ): MultiLayerConfiguration? {
     return NeuralNetConfiguration.Builder()
         .seed(seed.toLong())

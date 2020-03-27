@@ -26,9 +26,9 @@ fun main() {
     // Print out the graph parts
     val allVariables = graph.variables()
     println("Variables: $allVariables")
-    for (`var` in allVariables) {
-        val varShape = `var`.shape
-        println(`var`.name() + " - shape " + Arrays.toString(varShape))
+    for (sdVariable in allVariables) {
+        val varShape = sdVariable.shape
+        println(sdVariable.name() + " - shape " + Arrays.toString(varShape))
     }
 
     // Print out graph operations

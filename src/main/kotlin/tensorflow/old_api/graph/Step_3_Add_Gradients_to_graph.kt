@@ -20,7 +20,6 @@ fun main() {
                 .build()
                 .output<Float>(0)
 
-
             val y0: Output<Float> = g.opBuilder("Square", "y0")
                 .addInput(x1)
                 .build()
@@ -36,11 +35,9 @@ fun main() {
             val y2: Output<Float> = g.opBuilder("AddN", "AddN").addInputList(input).build().output(0);
             val grads0: Array<Output<*>> = g.addGradients(y1, toArray(x1))
 
-
             println(grads0)
             println(grads0.size)
             println(grads0[0].dataType())
-
 
             val grads1: Array<Output<*>> = g.addGradients(y2, toArray(x1, x2))
             println(grads1)

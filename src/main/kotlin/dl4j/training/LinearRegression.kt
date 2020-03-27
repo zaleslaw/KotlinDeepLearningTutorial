@@ -13,7 +13,7 @@ import java.util.*
  *  output = input * weights + bias
  */
 fun main() {
-    //How to calculate gradients, and get gradient arrays - linear regression (MSE, manually defined)
+    // How to calculate gradients, and get gradient arrays - linear regression (MSE, manually defined)
     val nIn = 4L
     val nOut = 2L
 

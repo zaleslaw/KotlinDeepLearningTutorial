@@ -29,7 +29,6 @@ dependencies {
     compile group: 'org.nd4j', name: 'nd4j-tensorflow', version: '1.0.0-beta6'
     compile group: 'org.bytedeco', name: 'tensorflow-platform', version: '1.15.0-1.5.2'
 
-
     compile('com.komputation:komputation:0.12.5', {
         exclude group: 'org.jcuda'
     })
