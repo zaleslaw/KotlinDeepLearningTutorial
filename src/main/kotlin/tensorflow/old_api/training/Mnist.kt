@@ -84,13 +84,12 @@ private fun metricGraph(
     val predicted: Operand<Long> = tf.math.argMax(softmax, tf.constant(1))
     val expected: Operand<Long> = tf.math.argMax(labels, tf.constant(1))
 
-    val accuracy = tf.math.mean(
+    return tf.math.mean(
         tf.dtypes.cast(
-            tf.math.equal<Long>(predicted, expected),
+            tf.math.equal(predicted, expected),
             Float::class.javaObjectType
         ), constArray(tf, 0)
     )
-    return accuracy
 }
 
 private fun train(
