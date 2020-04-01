@@ -87,7 +87,7 @@ private fun lossFunction(
     yPred: Add<Float>?,
     Y: Placeholder<Float>
 ): Div<Float>? {
-    
+
     val sum = tf.math.pow(tf.math.sub(yPred, Y), tf.constant(2f))
     val mse = tf.math.div(sum, tf.constant(2f * n))
     return mse
@@ -167,10 +167,9 @@ private fun initModelVariables(
     weight: Variable<Float>,
     bias: Variable<Float>
 ): Pair<Assign<Float>, Assign<Float>> {
-    val weight =
-        tf.assign(weight, tf.constant(1f))
+    val weightInit = tf.assign(weight, tf.constant(1f))
     val biasInit = tf.assign(bias, tf.constant(1f))
-    return Pair(weight, biasInit)
+    return Pair(weightInit, biasInit)
 }
 
 private fun defineModelVariables(tf: Ops): Pair<Variable<Float>, Variable<Float>> {
