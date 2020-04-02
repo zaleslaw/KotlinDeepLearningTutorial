@@ -1,4 +1,4 @@
-package tensorflow.old_api.training
+package tensorflow.old_api.training.linreg
 
 import org.tensorflow.Graph
 import org.tensorflow.Session
@@ -12,42 +12,73 @@ import org.tensorflow.op.math.Add
 import org.tensorflow.op.math.Div
 import org.tensorflow.op.train.ApplyGradientDescent
 import tensorflow.old_api.inference.printTFGraph
+import kotlin.random.Random
 
-const val n = 10 // amount of data points
-const val NO_MEANING_VALUE_TO_PUT_IN_PLACEHOLDER = 2000f
+/** Amount of data points. */
+private const val n = 10
 
-// 10 * xValues + 1 +- 0.2 = yValues
-val xValues = floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f)
-val yValues = floatArrayOf(10.9f, 21.2f, 30.8f, 41.2f, 50.8f, 61.1f, 70.95f, 81f, 90.9f, 101.2f)
+/** This value is used to fill the Y placeholder in prediction. */
+private const val NO_MEANING_VALUE_TO_PUT_IN_PLACEHOLDER = 2000f
 
 fun main() {
+    // Prepare the X data
+    val xValues = floatArrayOf(1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f)
+    // Prepare the Y data. The Y data is created approximately by the next law: 10*x + 2 + noise.
+    val yValues = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+
+    for ((i, x) in xValues.withIndex()) {
+        yValues[i] = 10 * x + 2 + Random(42).nextDouble(-0.1, 0.1).toFloat()
+    }
+
     Graph().use { graph ->
         val tf = Ops.create(graph)
 
-        val (X, Y) = definePlaceholders(tf)
+        val (X, Y) = placeholders(tf)
 
-        val (weight: Variable<Float>, bias: Variable<Float>) = defineModelVariables(tf)
+        val (weight: Variable<Float>, bias: Variable<Float>) = variables(
+            tf
+        )
 
-        val (weightInit, biasInit) = initModelVariables(tf, weight, bias)
+        val (weightInit, biasInit) = initVariables(
+            tf,
+            weight,
+            bias
+        )
 
-        val yPred = model(tf, X, weight, bias)
+        val yPredicted = defineModelFunction(tf, X, weight, bias)
 
-        val mse = lossFunction(tf, yPred, Y)
+        val mse = lossFunction(tf, yPredicted, Y)
 
-        val (weightGradientDescent, biasGradientDescent) = gradients(tf, mse, weight, bias)
+        val (weightGradientDescent, biasGradientDescent) = gradients(
+            tf,
+            mse,
+            weight,
+            bias
+        )
 
         printTFGraph(graph)
 
         Session(graph).use { session ->
-
-            train(session, weightInit, biasInit, weightGradientDescent, biasGradientDescent, X, Y)
+            train(
+                session,
+                weightInit,
+                biasInit,
+                weightGradientDescent,
+                biasGradientDescent,
+                X,
+                Y,
+                xValues,
+                yValues
+            )
 
             printLinearModel(session)
 
+            // Let's predict y for x = 10f
             val x = 10f
-            val res = predict(x, session, X, Y, yPred)
+            val predictedValue =
+                predict(x, session, X, Y, yPredicted)
 
-            println("Predicted value: $res")
+            println("Predicted value: $predictedValue")
         }
     }
 }
@@ -71,7 +102,7 @@ private fun gradients(
     return Pair(weightGradientDescent, biasGradientDescent)
 }
 
-private fun model(
+private fun defineModelFunction(
     tf: Ops,
     X: Placeholder<Float>,
     weight: Variable<Float>,
@@ -87,7 +118,6 @@ private fun lossFunction(
     yPred: Add<Float>?,
     Y: Placeholder<Float>
 ): Div<Float>? {
-
     val sum = tf.math.pow(tf.math.sub(yPred, Y), tf.constant(2f))
     val mse = tf.math.div(sum, tf.constant(2f * n))
     return mse
@@ -101,8 +131,6 @@ private fun predict(
     yPred: Add<Float>?
 ): Float {
     var predictedY = 0f
-
-
     Tensor.create(x).use { xTensor ->
         Tensor.create(NO_MEANING_VALUE_TO_PUT_IN_PLACEHOLDER).use { yTensor ->
             predictedY = session.runner()
@@ -122,7 +150,6 @@ private fun printLinearModel(session: Session) {
 
     println("Weight is $weightValue")
 
-
     val biasValue = session.runner()
         .fetch("Variable_1")
         .run()[0].floatValue()
@@ -137,7 +164,9 @@ private fun train(
     weightGradientDescent: ApplyGradientDescent<Float>?,
     biasGradientDescent: ApplyGradientDescent<Float>?,
     X: Placeholder<Float>,
-    Y: Placeholder<Float>
+    Y: Placeholder<Float>,
+    xValues: FloatArray,
+    yValues: FloatArray
 ) {
     // Initialize graph variables
     session.runner()
@@ -155,14 +184,13 @@ private fun train(
                     .feed(X.asOutput(), xTensor)
                     .feed(Y.asOutput(), yTensor)
                     .run()
-                println(" $x $y")
+                println("$x $y")
             }
         }
     }
 }
 
-
-private fun initModelVariables(
+private fun initVariables(
     tf: Ops,
     weight: Variable<Float>,
     bias: Variable<Float>
@@ -172,7 +200,7 @@ private fun initModelVariables(
     return Pair(weightInit, biasInit)
 }
 
-private fun defineModelVariables(tf: Ops): Pair<Variable<Float>, Variable<Float>> {
+private fun variables(tf: Ops): Pair<Variable<Float>, Variable<Float>> {
     val weights: Variable<Float> =
         tf.variable(Shape.scalar(), Float::class.javaObjectType)
     val bias: Variable<Float> =
@@ -180,7 +208,7 @@ private fun defineModelVariables(tf: Ops): Pair<Variable<Float>, Variable<Float>
     return Pair(weights, bias)
 }
 
-private fun definePlaceholders(tf: Ops): Pair<Placeholder<Float>, Placeholder<Float>> {
+private fun placeholders(tf: Ops): Pair<Placeholder<Float>, Placeholder<Float>> {
     val X = tf.placeholder(Float::class.javaObjectType, Placeholder.shape(Shape.scalar()))
     val Y = tf.placeholder(Float::class.javaObjectType, Placeholder.shape(Shape.scalar()))
     return Pair(X, Y)
