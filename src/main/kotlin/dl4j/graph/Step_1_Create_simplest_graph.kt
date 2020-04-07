@@ -17,8 +17,6 @@ fun main() {
     // Define variables and operations
     val values = Nd4j.ones(3, 4)
     val variable = graph.`var`("myVariable", values)
-    val plusOne = variable.add("add", 1.0) // Name: automatically generated as "add_scalar"
-    val mulTen = variable.mul("mulTen", 10.0) // Name: Defined to be "mulTen"
 
     println("Graph summary")
     println(graph.summary())
@@ -55,5 +53,4 @@ fun main() {
 
     val mulTenArr = graph.getArrForVarName("mulTen")
     println("'mulTen' values:\n$mulTenArr")
-
 }
