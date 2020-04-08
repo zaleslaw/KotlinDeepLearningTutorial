@@ -26,11 +26,7 @@ private const val PADDING_TYPE = "SAME"
 private const val INPUT_NAME = "input"
 private const val OUTPUT_NAME = "output"
 private const val TRAINING_LOSS = "training_loss"
-private const val TARGET = "target"
 
-
-// The reference implementation from the new TF Java API
-// https://github.com/tensorflow/java-models/blob/mnist/tensorflow-examples/src/main/java/org/tensorflow/model/examples/mnist/CnnMnist.java
 fun main() {
     val dataset =
         ImageDataset.create(VALIDATION_SIZE)
