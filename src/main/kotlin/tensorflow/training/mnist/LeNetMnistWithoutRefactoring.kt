@@ -10,17 +10,22 @@ import tensorflow.inference.printTFGraph
 import tensorflow.training.util.ImageBatch
 import tensorflow.training.util.ImageDataset
 
+private const val LEARNING_RATE = 0.2f
+private const val EPOCHS = 10
+private const val TRAINING_BATCH_SIZE = 500
+
 private const val NUM_LABELS = 10L
 private const val PIXEL_DEPTH = 255f
 private const val NUM_CHANNELS = 1L
 private const val IMAGE_SIZE = 28L
 private const val VALIDATION_SIZE = 0
-private const val TRAINING_BATCH_SIZE = 100
-private const val SEED = 123456789L
+
+private const val SEED = 12L
 private const val PADDING_TYPE = "SAME"
-const val INPUT_NAME = "input"
-const val OUTPUT_NAME = "output"
-const val TRAINING_LOSS = "training_loss"
+private const val INPUT_NAME = "input"
+private const val OUTPUT_NAME = "output"
+private const val TRAINING_LOSS = "training_loss"
+private const val TARGET = "target"
 
 
 // The reference implementation from the new TF Java API
@@ -44,6 +49,7 @@ fun main() {
         val centeringFactor = tf.constant(PIXEL_DEPTH / 2.0f)
         val scalingFactor = tf.constant(PIXEL_DEPTH)
 
+        // Scaling and one-hot are done in dataset preparation process (look to toNormalize and toOneHot) methods on Image Dataset
         val scaledInput = tf.math
             .div(
                 tf.math
@@ -69,7 +75,7 @@ fun main() {
 
         val conv1WeightsInit = tf.assign(conv1Weights, tf.math.mul(truncatedNormal, tf.constant(0.1f)))
 
-        val conv1 = tf.nn.conv2d(scaledInput, conv1Weights, mutableListOf(1L, 1L, 1L, 1L), PADDING_TYPE);
+        val conv1 = tf.nn.conv2d(images, conv1Weights, mutableListOf(1L, 1L, 1L, 1L), PADDING_TYPE);
 
         val conv1Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
 
@@ -94,7 +100,7 @@ fun main() {
         )
 
         val conv2Weights: Variable<Float> =
-            tf.variable(Shape.make(5L, 5L, NUM_CHANNELS, 32), Float::class.javaObjectType)
+            tf.variable(Shape.make(5, 5, 32, 64), Float::class.javaObjectType)
 
         val conv2WeightsInit = tf.assign(conv2Weights, tf.math.mul(truncatedNormal2, tf.constant(0.1f)))
 
@@ -161,7 +167,7 @@ fun main() {
 
         val fc2WeightsInit = tf.assign(fc2Weights, tf.math.mul(truncatedNormal4, tf.constant(0.1f)))
 
-        val fc2Biases: Variable<Float> = tf.variable(Shape.make(512), Float::class.javaObjectType)
+        val fc2Biases: Variable<Float> = tf.variable(Shape.make(NUM_LABELS), Float::class.javaObjectType)
 
         val fc2BiasesInit =
             tf.assign(fc2Biases, tf.fill(tf.constant(intArrayOf(NUM_LABELS.toInt())), tf.constant(0.1f)))
@@ -172,11 +178,13 @@ fun main() {
         val prediction = tf.withName(OUTPUT_NAME).nn.softmax(logits)
 
         // Loss function & regularization
-        val oneHot = tf.oneHot(labels, tf.constant(10), tf.constant(1.0f), tf.constant(0.0f))
+        /*val oneHot = tf.oneHot(tf.dtypes
+             .cast(labels, Int::class.javaObjectType), tf.constant(10), tf.constant(1.0f), tf.constant(0.0f))*/
 
-        val batchLoss = tf.nn.softmaxCrossEntropyWithLogits(logits, oneHot)
+        // labels are one-hot due to preprocessing
+        val batchLoss = tf.nn.softmaxCrossEntropyWithLogits(logits, labels)
 
-        val labelLoss = tf.math.mean(batchLoss.loss(), tf.constant(0))
+        val labelLoss = tf.withName(TRAINING_LOSS).math.mean(batchLoss.loss(), tf.constant(0))
 
         val regularizers = tf.math.add(
             tf.nn.l2Loss(fc1Weights), tf.math
@@ -186,13 +194,13 @@ fun main() {
                 )
         )
 
-        val loss = tf.withName(TRAINING_LOSS).math
-            .add(labelLoss, tf.math.mul(regularizers, tf.constant(5e-4f)))
+        val loss = labelLoss /*tf.withName(TRAINING_LOSS).math
+            .add(labelLoss, tf.math.mul(regularizers, tf.constant(5e-6f)))*/
 
 
         // Define gradients
 
-        val learningRate = tf.constant(0.2f)
+        val learningRate = tf.constant(LEARNING_RATE)
         val variables =
             listOf(conv1Weights, conv1Biases, conv2Weights, conv2Biases, fc1Weights, fc1Biases, fc2Weights, fc2Biases)
 
@@ -222,32 +230,41 @@ fun main() {
                 .addTarget(fc2WeightsInit)
                 .addTarget(fc2BiasesInit)
                 .run()
+            for (i in 1..EPOCHS) {
 
-            // Train the graph
-            val batchIter: ImageDataset.ImageBatchIterator = dataset.trainingBatchIterator(
-                TRAINING_BATCH_SIZE
-            )
-            while (batchIter.hasNext()) {
-                val batch: ImageBatch = batchIter.next()
-                Tensor.create(batch.shape(784), batch.images()).use { batchImages ->
-                    Tensor.create(batch.shape(10), batch.labels()).use { batchLabels ->
-                        session.runner()
-                            .addTarget(conv1WeightsGD)
-                            .addTarget(conv1BiasesGD)
-                            .addTarget(conv2WeightsGD)
-                            .addTarget(conv2BiasesGD)
-                            .addTarget(fc1WeightsGD)
-                            .addTarget(fc1BiasesGD)
-                            .addTarget(fc2WeightsGD)
-                            .addTarget(fc2BiasesGD)
-                            .feed(images.asOutput(), batchImages)
-                            .feed(labels.asOutput(), batchLabels)
-                            .run()
+                // Train the graph
+                val batchIter: ImageDataset.ImageBatchIterator = dataset.trainingBatchIterator(
+                    TRAINING_BATCH_SIZE
+                )
+
+                while (batchIter.hasNext()) {
+                    val batch: ImageBatch = batchIter.next()
+                    Tensor.create(
+                        longArrayOf(batch.size().toLong(), IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS),
+                        batch.images()
+                    ).use { batchImages ->
+                        Tensor.create(longArrayOf(batch.size().toLong(), 10), batch.labels()).use { batchLabels ->
+                            val lossValue = session.runner()
+                                .addTarget(conv1WeightsGD)
+                                .addTarget(conv1BiasesGD)
+                                .addTarget(conv2WeightsGD)
+                                .addTarget(conv2BiasesGD)
+                                .addTarget(fc1WeightsGD)
+                                .addTarget(fc1BiasesGD)
+                                .addTarget(fc2WeightsGD)
+                                .addTarget(fc2BiasesGD)
+                                .feed(images.asOutput(), batchImages)
+                                .feed(labels.asOutput(), batchLabels)
+                                .fetch(TRAINING_LOSS)
+                                .run()[0].floatValue()
+                            println("epochs: $i lossValue: $lossValue")
+                        }
                     }
                 }
             }
 
-            val predicted: Operand<Long> = tf.math.argMax(softmax, tf.constant(1))
+
+            val predicted: Operand<Long> = tf.math.argMax(prediction, tf.constant(1))
             val expected: Operand<Long> = tf.math.argMax(labels, tf.constant(1))
 
             // Define multi-classification metric
@@ -259,7 +276,10 @@ fun main() {
             )
 
             val testBatch: ImageBatch = dataset.testBatch()
-            Tensor.create(testBatch.shape(784), testBatch.images()).use { testImages ->
+            Tensor.create(
+                longArrayOf(testBatch.size().toLong(), IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS),
+                testBatch.images()
+            ).use { testImages ->
                 Tensor.create(testBatch.shape(10), testBatch.labels()).use { testLabels ->
                     session.runner()
                         .fetch(accuracy)
