@@ -1,4 +1,4 @@
-package tensorflow.training.mnist
+package tensorflow.training.mnist.lenet
 
 import org.tensorflow.*
 import org.tensorflow.op.Ops
@@ -7,6 +7,7 @@ import org.tensorflow.op.core.Slice
 import org.tensorflow.op.core.Variable
 import org.tensorflow.op.random.TruncatedNormal
 import tensorflow.inference.printTFGraph
+import tensorflow.training.mnist.constArray
 import tensorflow.training.util.ImageBatch
 import tensorflow.training.util.ImageDataset
 
@@ -40,7 +41,14 @@ fun main() {
         // Define placeholders
         val images = tf.withName(INPUT_NAME).placeholder(
             Float::class.javaObjectType,
-            Placeholder.shape(Shape.make(-1, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS))
+            Placeholder.shape(
+                Shape.make(
+                    -1,
+                    IMAGE_SIZE,
+                    IMAGE_SIZE,
+                    NUM_CHANNELS
+                )
+            )
         )
 
         val labels = tf.placeholder(Float::class.javaObjectType)
@@ -75,11 +83,21 @@ fun main() {
 
         val conv1WeightsInit = tf.assign(conv1Weights, tf.math.mul(truncatedNormal, tf.constant(0.1f)))
 
-        val conv1 = tf.nn.conv2d(images, conv1Weights, mutableListOf(1L, 1L, 1L, 1L), PADDING_TYPE);
+        val conv1 = tf.nn.conv2d(
+            images, conv1Weights, mutableListOf(1L, 1L, 1L, 1L),
+            PADDING_TYPE
+        );
 
         val conv1Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
 
-        val conv1BiasesInit = tf.assign(conv1Biases, tf.zeros(constArray(tf, 32), Float::class.javaObjectType))
+        val conv1BiasesInit = tf.assign(
+            conv1Biases, tf.zeros(
+                constArray(
+                    tf,
+                    32
+                ), Float::class.javaObjectType
+            )
+        )
 
         val relu1 = tf.nn.relu(tf.nn.biasAdd(conv1, conv1Biases))
 
@@ -104,11 +122,21 @@ fun main() {
 
         val conv2WeightsInit = tf.assign(conv2Weights, tf.math.mul(truncatedNormal2, tf.constant(0.1f)))
 
-        val conv2 = tf.nn.conv2d(pool1, conv2Weights, mutableListOf(1L, 1L, 1L, 1L), PADDING_TYPE);
+        val conv2 = tf.nn.conv2d(
+            pool1, conv2Weights, mutableListOf(1L, 1L, 1L, 1L),
+            PADDING_TYPE
+        );
 
         val conv2Biases: Variable<Float> = tf.variable(Shape.make(64), Float::class.javaObjectType)
 
-        val conv2BiasesInit = tf.assign(conv2Biases, tf.zeros(constArray(tf, 64), Float::class.javaObjectType))
+        val conv2BiasesInit = tf.assign(
+            conv2Biases, tf.zeros(
+                constArray(
+                    tf,
+                    64
+                ), Float::class.javaObjectType
+            )
+        )
 
         val relu2 = tf.nn.relu(tf.nn.biasAdd(conv2, conv2Biases))
 
@@ -240,7 +268,12 @@ fun main() {
                 while (batchIter.hasNext()) {
                     val batch: ImageBatch = batchIter.next()
                     Tensor.create(
-                        longArrayOf(batch.size().toLong(), IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS),
+                        longArrayOf(
+                            batch.size().toLong(),
+                            IMAGE_SIZE,
+                            IMAGE_SIZE,
+                            NUM_CHANNELS
+                        ),
                         batch.images()
                     ).use { batchImages ->
                         Tensor.create(longArrayOf(batch.size().toLong(), 10), batch.labels()).use { batchLabels ->
@@ -277,7 +310,12 @@ fun main() {
 
             val testBatch: ImageBatch = dataset.testBatch()
             Tensor.create(
-                longArrayOf(testBatch.size().toLong(), IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS),
+                longArrayOf(
+                    testBatch.size().toLong(),
+                    IMAGE_SIZE,
+                    IMAGE_SIZE,
+                    NUM_CHANNELS
+                ),
                 testBatch.images()
             ).use { testImages ->
                 Tensor.create(testBatch.shape(10), testBatch.labels()).use { testLabels ->
