@@ -15,7 +15,6 @@ fun main() {
         Session(g).use { session ->
 
             // Define constants
-
             val a: Operation = g.opBuilder("Const", "a")
                 .setAttr("dtype", INT64)
                 .setAttr("value", Tensors.create(10L))
@@ -27,7 +26,6 @@ fun main() {
                 .build()
 
             // Define placeholders
-
             val x: Operation = g.opBuilder("Placeholder", "x")
                 .setAttr("dtype", INT64)
                 .build()
@@ -38,7 +36,6 @@ fun main() {
 
 
             // Define functions
-
             val ax: Operation = g.opBuilder("Mul", "ax")
                 .addInput(a.output<Long>(0))
                 .addInput(x.output<Long>(0))
@@ -59,7 +56,6 @@ fun main() {
             printTFGraph(g)
 
             // Run the calculations
-
             val tensor = session
                 .runner()
                 .fetch("result")
