@@ -89,7 +89,13 @@ fun main() {
                 }
             }
 
-            // Evaluate the model
+            // TODO: look at the https://github.com/eaplatanios/tensorflow_scala/blob/78eba45fc3c607b8528c709b7fb6a51ed5b8a909/modules/api/src/main/scala/org/platanios/tensorflow/api/ops/variables/Saver.scala
+            /*tf.train.save(
+                tf.constant("biases"),
+                tf.constant("weights"),
+                tf.constant("weights"),
+                mutableListOf(tf.constant("weights")))*/
+
             val predicted: Operand<Long> = tf.math.argMax(softmax, tf.constant(1))
             val expected: Operand<Long> = tf.math.argMax(labels, tf.constant(1))
 

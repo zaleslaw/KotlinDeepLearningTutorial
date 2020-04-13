@@ -49,10 +49,7 @@ fun main() {
 
         Session(graph).use { session ->
             // Initialize graph variables
-            session.runner()
-                .addTarget(weightsInit)
-                .addTarget(biasesInit)
-                .run()
+            initializeGraphVariables(session, weightsInit, biasesInit)
 
             train(
                 dataset,
@@ -74,6 +71,17 @@ fun main() {
             )
         }
     }
+}
+
+private fun initializeGraphVariables(
+    session: Session,
+    weightsInit: Assign<Float>,
+    biasesInit: Assign<Float>
+) {
+    session.runner()
+        .addTarget(weightsInit)
+        .addTarget(biasesInit)
+        .run()
 }
 
 private fun gradients(

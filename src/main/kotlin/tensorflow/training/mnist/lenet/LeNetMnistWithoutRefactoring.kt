@@ -11,25 +11,27 @@ import tensorflow.training.mnist.constArray
 import tensorflow.training.util.ImageBatch
 import tensorflow.training.util.ImageDataset
 
+// Hyper-parameters
 private const val LEARNING_RATE = 0.2f
 private const val EPOCHS = 10
 private const val TRAINING_BATCH_SIZE = 500
 
+// Image pre-processing constants
 private const val NUM_LABELS = 10L
-private const val PIXEL_DEPTH = 255f
 private const val NUM_CHANNELS = 1L
 private const val IMAGE_SIZE = 28L
-private const val VALIDATION_SIZE = 0
 
+private const val VALIDATION_SIZE = 0
 private const val SEED = 12L
 private const val PADDING_TYPE = "SAME"
+
+// Tensor names
 private const val INPUT_NAME = "input"
 private const val OUTPUT_NAME = "output"
 private const val TRAINING_LOSS = "training_loss"
 
 fun main() {
-    val dataset =
-        ImageDataset.create(VALIDATION_SIZE)
+    val dataset = ImageDataset.create(VALIDATION_SIZE)
 
     Graph().use { graph ->
         val tf = Ops.create(graph)
@@ -48,22 +50,6 @@ fun main() {
         )
 
         val labels = tf.placeholder(Float::class.javaObjectType)
-
-
-        val centeringFactor = tf.constant(PIXEL_DEPTH / 2.0f)
-        val scalingFactor = tf.constant(PIXEL_DEPTH)
-
-        // Scaling and one-hot are done in dataset preparation process (look to toNormalize and toOneHot) methods on Image Dataset
-        val scaledInput = tf.math
-            .div(
-                tf.math
-                    .sub(
-                        tf.dtypes
-                            .cast(images, Float::class.javaObjectType), centeringFactor
-                    ),
-                scalingFactor
-            )
-
 
         // First conv layer
 
@@ -104,7 +90,6 @@ fun main() {
             tf.constant(intArrayOf(1, 2, 2, 1)),
             PADDING_TYPE
         )
-
 
         // Second conv layer
         val truncatedNormal2 = tf.random.truncatedNormal(
@@ -201,35 +186,19 @@ fun main() {
         // Predicted outputs
         val prediction = tf.withName(OUTPUT_NAME).nn.softmax(logits)
 
-        // Loss function & regularization
-        /*val oneHot = tf.oneHot(tf.dtypes
-             .cast(labels, Int::class.javaObjectType), tf.constant(10), tf.constant(1.0f), tf.constant(0.0f))*/
-
-        // labels are one-hot due to preprocessing
         val batchLoss = tf.nn.softmaxCrossEntropyWithLogits(logits, labels)
 
-        val labelLoss = tf.withName(TRAINING_LOSS).math.mean(batchLoss.loss(), tf.constant(0))
-
-        val regularizers = tf.math.add(
-            tf.nn.l2Loss(fc1Weights), tf.math
-                .add(
-                    tf.nn.l2Loss(fc1Biases),
-                    tf.math.add(tf.nn.l2Loss(fc2Weights), tf.nn.l2Loss(fc2Biases))
-                )
-        )
-
-        val loss = labelLoss /*tf.withName(TRAINING_LOSS).math
-            .add(labelLoss, tf.math.mul(regularizers, tf.constant(5e-6f)))*/
-
+        val loss = tf.withName(TRAINING_LOSS).math.mean(batchLoss.loss(), tf.constant(0))
 
         // Define gradients
-
         val learningRate = tf.constant(LEARNING_RATE)
+
         val variables =
             listOf(conv1Weights, conv1Biases, conv2Weights, conv2Biases, fc1Weights, fc1Biases, fc2Weights, fc2Biases)
 
         val gradients = tf.gradients(loss, variables)
 
+        // Set up the SGD for all variables
         val conv1WeightsGD = tf.train.applyGradientDescent(variables[0], learningRate, gradients.dy<Float>(0))
         val conv1BiasesGD = tf.train.applyGradientDescent(variables[1], learningRate, gradients.dy<Float>(1))
         val conv2WeightsGD = tf.train.applyGradientDescent(variables[2], learningRate, gradients.dy<Float>(2))
@@ -239,10 +208,10 @@ fun main() {
         val fc2WeightsGD = tf.train.applyGradientDescent(variables[6], learningRate, gradients.dy<Float>(6))
         val fc2BiasesGD = tf.train.applyGradientDescent(variables[7], learningRate, gradients.dy<Float>(7))
 
-
         printTFGraph(graph)
 
         Session(graph).use { session ->
+
             // Initialize graph variables
             session.runner()
                 .addTarget(conv1WeightsInit)
@@ -254,9 +223,9 @@ fun main() {
                 .addTarget(fc2WeightsInit)
                 .addTarget(fc2BiasesInit)
                 .run()
-            for (i in 1..EPOCHS) {
 
-                // Train the graph
+            // Train the graph
+            for (i in 1..EPOCHS) {
                 val batchIter: ImageDataset.ImageBatchIterator = dataset.trainingBatchIterator(
                     TRAINING_BATCH_SIZE
                 )
@@ -292,7 +261,7 @@ fun main() {
                 }
             }
 
-
+            // Evaluate the model
             val predicted: Operand<Long> = tf.math.argMax(prediction, tf.constant(1))
             val expected: Operand<Long> = tf.math.argMax(labels, tf.constant(1))
 
@@ -325,4 +294,3 @@ fun main() {
         }
     }
 }
-
