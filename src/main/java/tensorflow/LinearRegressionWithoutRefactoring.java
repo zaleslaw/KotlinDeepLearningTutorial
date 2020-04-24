@@ -36,7 +36,6 @@ class LinearRegressionWithoutRefactoring {
             yValues[i] = (float) (10 * xValues[i] + 2 + 0.1 * (rnd.nextDouble() - 0.5));
         }
 
-
         try (Graph graph = new Graph()) {
             Ops tf = Ops.create(graph);
 
