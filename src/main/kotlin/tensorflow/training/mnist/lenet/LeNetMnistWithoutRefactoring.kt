@@ -68,7 +68,7 @@ fun main() {
         val conv1 = tf.nn.conv2d(
             images, conv1Weights, mutableListOf(1L, 1L, 1L, 1L),
             PADDING_TYPE
-        );
+        )
 
         val conv1Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
 
@@ -106,7 +106,7 @@ fun main() {
         val conv2 = tf.nn.conv2d(
             pool1, conv2Weights, mutableListOf(1L, 1L, 1L, 1L),
             PADDING_TYPE
-        );
+        )
 
         val conv2Biases: Variable<Float> = tf.variable(Shape.make(64), Float::class.javaObjectType)
 
@@ -199,29 +199,23 @@ fun main() {
         val gradients = tf.gradients(loss, variables)
 
         // Set up the SGD for all variables
-        val conv1WeightsGD = tf.train.applyGradientDescent(variables[0], learningRate, gradients.dy<Float>(0))
-        val conv1BiasesGD = tf.train.applyGradientDescent(variables[1], learningRate, gradients.dy<Float>(1))
-        val conv2WeightsGD = tf.train.applyGradientDescent(variables[2], learningRate, gradients.dy<Float>(2))
-        val conv2BiasesGD = tf.train.applyGradientDescent(variables[3], learningRate, gradients.dy<Float>(3))
-        val fc1WeightsGD = tf.train.applyGradientDescent(variables[4], learningRate, gradients.dy<Float>(4))
-        val fc1BiasesGD = tf.train.applyGradientDescent(variables[5], learningRate, gradients.dy<Float>(5))
-        val fc2WeightsGD = tf.train.applyGradientDescent(variables[6], learningRate, gradients.dy<Float>(6))
-        val fc2BiasesGD = tf.train.applyGradientDescent(variables[7], learningRate, gradients.dy<Float>(7))
+        val variablesGD = variables.mapIndexed { index, variable ->
+            tf.train.applyGradientDescent(variable, learningRate, gradients.dy(index))
+        }
+
+        val variablesInit = listOf(
+            conv1WeightsInit, conv1BiasesInit, conv2WeightsInit, conv2BiasesInit,
+            fc1WeightsInit, fc1BiasesInit, fc2WeightsInit, fc2BiasesInit)
 
         printTFGraph(graph)
 
         Session(graph).use { session ->
 
+            fun <T, E> T.applyF(f: T.(E) -> T, ls: Iterable<E>) = ls.fold(this, f)
+
             // Initialize graph variables
             session.runner()
-                .addTarget(conv1WeightsInit)
-                .addTarget(conv1BiasesInit)
-                .addTarget(conv2WeightsInit)
-                .addTarget(conv2BiasesInit)
-                .addTarget(fc1WeightsInit)
-                .addTarget(fc1BiasesInit)
-                .addTarget(fc2WeightsInit)
-                .addTarget(fc2BiasesInit)
+                .applyF(Session.Runner::addTarget, variablesInit)
                 .run()
 
             // Train the graph
@@ -243,14 +237,7 @@ fun main() {
                     ).use { batchImages ->
                         Tensor.create(longArrayOf(batch.size().toLong(), 10), batch.labels()).use { batchLabels ->
                             val lossValue = session.runner()
-                                .addTarget(conv1WeightsGD)
-                                .addTarget(conv1BiasesGD)
-                                .addTarget(conv2WeightsGD)
-                                .addTarget(conv2BiasesGD)
-                                .addTarget(fc1WeightsGD)
-                                .addTarget(fc1BiasesGD)
-                                .addTarget(fc2WeightsGD)
-                                .addTarget(fc2BiasesGD)
+                                .applyF(Session.Runner::addTarget, variablesGD)
                                 .feed(images.asOutput(), batchImages)
                                 .feed(labels.asOutput(), batchLabels)
                                 .fetch(TRAINING_LOSS)
