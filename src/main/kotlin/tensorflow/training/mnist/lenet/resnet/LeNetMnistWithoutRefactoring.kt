@@ -1,4 +1,4 @@
-package tensorflow.training.mnist.lenet
+package tensorflow.training.mnist.lenet.resnet
 
 import org.tensorflow.*
 import org.tensorflow.op.Ops
@@ -13,7 +13,7 @@ import tensorflow.training.util.ImageDataset
 
 // Hyper-parameters
 private const val LEARNING_RATE = 0.2f
-private const val EPOCHS = 10
+private const val EPOCHS = 3
 private const val TRAINING_BATCH_SIZE = 500
 
 // Image pre-processing constants
@@ -30,6 +30,7 @@ private const val INPUT_NAME = "input"
 private const val OUTPUT_NAME = "output"
 private const val TRAINING_LOSS = "training_loss"
 
+/** Accuracy: 0.9107 */
 fun main() {
     val dataset = ImageDataset.create(VALIDATION_SIZE)
 
@@ -94,13 +95,13 @@ fun main() {
 
         // Second conv layer
         val truncatedNormal2 = tf.random.truncatedNormal(
-            tf.constant(longArrayOf(5, 5, 32, 64)),
+            tf.constant(longArrayOf(5, 5, 32, 32)),
             Float::class.javaObjectType,
             TruncatedNormal.seed(SEED)
         )
 
         val conv2Weights: Variable<Float> =
-            tf.variable(Shape.make(5, 5, 32, 64), Float::class.javaObjectType)
+            tf.variable(Shape.make(5, 5, 32, 32), Float::class.javaObjectType)
 
         val conv2WeightsInit = tf.assign(conv2Weights, tf.math.mul(truncatedNormal2, tf.constant(0.1f)))
 
@@ -109,13 +110,13 @@ fun main() {
             PADDING_TYPE
         )
 
-        val conv2Biases: Variable<Float> = tf.variable(Shape.make(64), Float::class.javaObjectType)
+        val conv2Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
 
         val conv2BiasesInit = tf.assign(
             conv2Biases, tf.zeros(
                 constArray(
                     tf,
-                    64
+                    32
                 ), Float::class.javaObjectType
             )
         )
@@ -149,13 +150,13 @@ fun main() {
 
         // Fully connected layer
         val truncatedNormal3 = tf.random.truncatedNormal(
-            tf.constant(longArrayOf(IMAGE_SIZE * IMAGE_SIZE * 4, 512)),
+            tf.constant(longArrayOf(IMAGE_SIZE * IMAGE_SIZE * 2, 512)),
             Float::class.javaObjectType,
             TruncatedNormal.seed(SEED)
         )
 
         val fc1Weights: Variable<Float> =
-            tf.variable(Shape.make(IMAGE_SIZE * IMAGE_SIZE * 4, 512), Float::class.javaObjectType)
+            tf.variable(Shape.make(IMAGE_SIZE * IMAGE_SIZE * 2, 512), Float::class.javaObjectType)
 
         val fc1WeightsInit = tf.assign(fc1Weights, tf.math.mul(truncatedNormal3, tf.constant(0.1f)))
 
@@ -206,7 +207,8 @@ fun main() {
 
         val variablesInit = listOf(
             conv1WeightsInit, conv1BiasesInit, conv2WeightsInit, conv2BiasesInit,
-            fc1WeightsInit, fc1BiasesInit, fc2WeightsInit, fc2BiasesInit)
+            fc1WeightsInit, fc1BiasesInit, fc2WeightsInit, fc2BiasesInit
+        )
 
         printTFGraph(graph)
 

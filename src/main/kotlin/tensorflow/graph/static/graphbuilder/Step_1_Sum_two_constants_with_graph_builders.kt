@@ -17,6 +17,7 @@ fun main() {
                         .opBuilder("Const", "aOps")
                         .setAttr("dtype", c1.dataType())
                         .setAttr("value", c1)
+                        .setDevice("/job:localhost/replica:0/task:0/device:GPU:0")
                         .build()
                         .output<Long>(0)
 
@@ -24,6 +25,7 @@ fun main() {
                         .opBuilder("Const", "bOps")
                         .setAttr("dtype", c1.dataType())
                         .setAttr("value", c2)
+                        .setDevice("/job:localhost/replica:0/task:0/device:GPU:0")
                         .build()
                         .output<Long>(0)
 
@@ -32,6 +34,7 @@ fun main() {
                         .opBuilder("Add", "Add")
                         .addInput(aOps)
                         .addInput(bOps)
+                        .setDevice("/job:localhost/replica:0/task:0/device:GPU:0")
                         .build()
                         .output(0);
 

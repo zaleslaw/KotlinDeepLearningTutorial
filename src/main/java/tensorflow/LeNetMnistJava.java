@@ -36,7 +36,6 @@ public class LeNetMnistJava {
     private static final String OUTPUT_NAME = "output";
     private static final String TRAINING_LOSS = "training_loss";
 
-
     public static void main(String[] args) {
         ImageDataset dataset = ImageDataset.Companion.create(VALIDATION_SIZE);
 
@@ -44,17 +43,8 @@ public class LeNetMnistJava {
             Ops tf = Ops.create(graph);
 
             // Define placeholders
-            Placeholder<Float> images = tf.withName(INPUT_NAME).placeholder(
-                    Float.class,
-                    Placeholder.shape(
-                            Shape.make(
-                                    -1,
-                                    IMAGE_SIZE,
-                                    IMAGE_SIZE,
-                                    NUM_CHANNELS
-                            )
-                    )
-            );
+            Placeholder<Float> images = tf.withName(INPUT_NAME).placeholder(Float.class,
+                    Placeholder.shape(Shape.make(-1, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS)));
 
             Placeholder<Float> labels = tf.placeholder(Float.class);
 
@@ -71,52 +61,31 @@ public class LeNetMnistJava {
 
             Assign<Float> conv1WeightsInit = tf.assign(conv1Weights, tf.math.mul(truncatedNormal, tf.constant(0.1f)));
 
-            Conv2d<Float> conv1 = tf.nn.conv2d(
-                    images, conv1Weights, longListOf(1L, 1L, 1L, 1L),
-                    PADDING_TYPE
-            );
+            Conv2d<Float> conv1 = tf.nn.conv2d(images, conv1Weights, longListOf(1L, 1L, 1L, 1L), PADDING_TYPE);
 
             Variable<Float> conv1Biases = tf.variable(Shape.make(32), Float.class);
 
-            Assign<Float> conv1BiasesInit = tf.assign(
-                    conv1Biases, tf.zeros(
-                            constArray(
-                                    tf,
-                                    32
-                            ), Float.class
-                    )
-            );
+            Assign<Float> conv1BiasesInit = tf.assign(conv1Biases, tf.zeros(constArray(tf, 32), Float.class));
 
             Relu<Float> relu1 = tf.nn.relu(tf.nn.biasAdd(conv1, conv1Biases));
 
             // First pooling layer
-            MaxPool<Float> pool1 = tf.nn.maxPool(
-                    relu1,
-                    tf.constant(new int[]{1, 2, 2, 1}),
-                    tf.constant(new int[]{1, 2, 2, 1}),
-                    PADDING_TYPE
-            );
+            MaxPool<Float> pool1 = tf.nn.maxPool(relu1,
+                    tf.constant(new int[]{1, 2, 2, 1}), tf.constant(new int[]{1, 2, 2, 1}), PADDING_TYPE);
 
             // Second conv layer
-            TruncatedNormal<Float> truncatedNormal2 = tf.random.truncatedNormal(
-                    tf.constant(new long[]{5, 5, 32, 64}),
-                    Float.class,
-                    TruncatedNormal.seed(SEED)
-            );
+            TruncatedNormal<Float> truncatedNormal2 = tf.random.truncatedNormal(tf.constant(new long[]{5, 5, 32, 64}),
+                    Float.class, TruncatedNormal.seed(SEED));
 
             Variable<Float> conv2Weights = tf.variable(Shape.make(5, 5, 32, 64), Float.class);
 
             Assign<Float> conv2WeightsInit = tf.assign(conv2Weights, tf.math.mul(truncatedNormal2, tf.constant(0.1f)));
 
-            Conv2d<Float> conv2 = tf.nn.conv2d(
-                    pool1, conv2Weights, longListOf(1L, 1L, 1L, 1L),
-                    PADDING_TYPE
-            );
+            Conv2d<Float> conv2 = tf.nn.conv2d(pool1, conv2Weights, longListOf(1L, 1L, 1L, 1L), PADDING_TYPE);
 
             Variable<Float> conv2Biases = tf.variable(Shape.make(64), Float.class);
 
             Assign<Float> conv2BiasesInit = tf.assign(conv2Biases, tf.zeros(constArray(tf, 64), Float.class));
-
 
             Relu<Float> relu2 = tf.nn.relu(tf.nn.biasAdd(conv2, conv2Biases));
 
@@ -268,7 +237,6 @@ public class LeNetMnistJava {
         }
         return res;
     }
-
 
     public static Operand<Integer> constArray(Ops tf, int... i) {
         return tf.constant(i);

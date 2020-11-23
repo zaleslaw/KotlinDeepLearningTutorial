@@ -1,7 +1,9 @@
+/*
 package tensorflow.training.mnist.lenet
 
 import org.tensorflow.*
 import org.tensorflow.op.Ops
+import org.tensorflow.op.core.Assign
 import org.tensorflow.op.core.Placeholder
 import org.tensorflow.op.core.Slice
 import org.tensorflow.op.core.Variable
@@ -84,13 +86,43 @@ fun main() {
         val relu1 = tf.nn.relu(tf.nn.biasAdd(conv1, conv1Biases))
 
 
+       */
+/* val axis: Int = -1
+        val momentum: Float = 0.9f
+        val epsilon: Float = 1e-3f
+        val center: Boolean = true
+        val scale: Boolean = true
+        val betaInitializer: Assign<Float>
+        val gammaInitializer: Assign<Float>
+        val movingMeanInitializer: Assign<Float>
+        val movingVarianceInitializer: Assign<Float>
+
+        val beta = tf.zeros[Float](parametersShape)
+
+        val gamma =
+                tf.ones[Float](parametersShape)
+
+        val movingMean = tf.variable[Float]("MovingMean", parametersShape, movingMeanInitializer, trainable = false)
+        val movingVariance = tf.variable[Float]("MovingVariance", parametersShape, movingVarianceInitializer, trainable = false)
+        *//*
+
+
+        val m = tf.constant(0.2f)
+        val v = tf.constant(0.2f)
+        val beta = tf.constant(0.2f)
+        val gamma = tf.constant(0.2f)
+        val batchNorm = tf.nn.fusedBatchNorm(relu1, m, v, beta, gamma, null)
+
+       */
+/* tf.nn.
         // First pooling layer
         val pool1 = tf.nn.maxPool(
-            relu1,
+            batchNorm,
             tf.constant(intArrayOf(1, 2, 2, 1)),
             tf.constant(intArrayOf(1, 2, 2, 1)),
             PADDING_TYPE
-        )
+        )*//*
+
 
         // Second conv layer
         val truncatedNormal2 = tf.random.truncatedNormal(
@@ -281,4 +313,4 @@ fun main() {
             }
         }
     }
-}
+}*/

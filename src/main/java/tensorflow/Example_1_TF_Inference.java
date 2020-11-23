@@ -15,8 +15,8 @@ public class Example_1_TF_Inference {
         System.out.println(TensorFlow.version());
 
         List<MnistUtils.MnistLabeledImage> images = MnistUtils.mnistAsList(
-                "src/tensorflow.old_api.tensors.main/resources/datasets/t10k-images-idx3-ubyte",
-                "src/tensorflow.old_api.tensors.main/resources/datasets/t10k-labels-idx1-ubyte",
+                "src/main/resources/datasets/t10k-images-idx3-ubyte",
+                "src/main/resources/datasets/t10k-labels-idx1-ubyte",
                 new Random(0),
                 10000
         );
@@ -29,7 +29,7 @@ public class Example_1_TF_Inference {
         };
 
         // load the model Bundle
-        try (SavedModelBundle b = SavedModelBundle.load("src/tensorflow.old_api.tensorflow.old_api.tensorflow.old_api.tensors.main/resources/models", "serve")) {
+        try (SavedModelBundle b = SavedModelBundle.load("src/main/resources/models", "serve")) {
             // create the session from the Bundle
             Session sess = b.session();
             Session.Runner runner = sess.runner();

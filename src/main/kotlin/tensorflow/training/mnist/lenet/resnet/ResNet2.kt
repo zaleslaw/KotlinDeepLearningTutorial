@@ -1,4 +1,4 @@
-package tensorflow.training.mnist.lenet
+package tensorflow.training.mnist.lenet.resnet
 
 import org.tensorflow.*
 import org.tensorflow.op.Ops
@@ -13,8 +13,8 @@ import tensorflow.training.util.ImageDataset
 
 // Hyper-parameters
 private const val LEARNING_RATE = 0.2f
-private const val EPOCHS = 10
-private const val TRAINING_BATCH_SIZE = 500
+private const val EPOCHS = 3
+private const val TRAINING_BATCH_SIZE = 1000
 
 // Image pre-processing constants
 private const val NUM_LABELS = 10L
@@ -30,6 +30,15 @@ private const val INPUT_NAME = "input"
 private const val OUTPUT_NAME = "output"
 private const val TRAINING_LOSS = "training_loss"
 
+
+/** Accuracy: 0.9019 */
+
+/**
+ * Here we see
+ *
+ *     | ---- identity -- |                       | ---- identity -- |
+ *  -- +- conv2d/conv2d --+ -> Relu -> MaxPool-> +- conv2d/conv2d --+ -> Relu -> MaxPool -> Flatten -> Dense Top
+ */
 fun main() {
     val dataset = ImageDataset.create(VALIDATION_SIZE)
 
@@ -51,7 +60,7 @@ fun main() {
 
         val labels = tf.placeholder(Float::class.javaObjectType)
 
-        // First conv layer
+        // First conv block
 
         // Generate random data to fill the weight matrix
         val truncatedNormal = tf.random.truncatedNormal(
@@ -60,20 +69,21 @@ fun main() {
             TruncatedNormal.seed(SEED)
         )
 
-        val conv1Weights: Variable<Float> =
+
+        val conv11Weights: Variable<Float> =
             tf.variable(Shape.make(5L, 5L, NUM_CHANNELS, 32), Float::class.javaObjectType)
 
-        val conv1WeightsInit = tf.assign(conv1Weights, tf.math.mul(truncatedNormal, tf.constant(0.1f)))
+        val conv11WeightsInit = tf.assign(conv11Weights, tf.math.mul(truncatedNormal, tf.constant(0.1f)))
 
-        val conv1 = tf.nn.conv2d(
-            images, conv1Weights, mutableListOf(1L, 1L, 1L, 1L),
+        val conv11 = tf.nn.conv2d(
+            images, conv11Weights, mutableListOf(1L, 1L, 1L, 1L),
             PADDING_TYPE
         )
 
-        val conv1Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
+        val conv11Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
 
-        val conv1BiasesInit = tf.assign(
-            conv1Biases, tf.zeros(
+        val conv11BiasesInit = tf.assign(
+            conv11Biases, tf.zeros(
                 constArray(
                     tf,
                     32
@@ -81,50 +91,112 @@ fun main() {
             )
         )
 
-        val relu1 = tf.nn.relu(tf.nn.biasAdd(conv1, conv1Biases))
+        val relu11 = tf.nn.relu(tf.nn.biasAdd(conv11, conv11Biases))
 
+        val conv12Weights: Variable<Float> =
+            tf.variable(Shape.make(5L, 5L, 32, 32), Float::class.javaObjectType)
 
-        // First pooling layer
-        val pool1 = tf.nn.maxPool(
-            relu1,
-            tf.constant(intArrayOf(1, 2, 2, 1)),
-            tf.constant(intArrayOf(1, 2, 2, 1)),
-            PADDING_TYPE
-        )
-
-        // Second conv layer
+        // Generate random data to fill the weight matrix
         val truncatedNormal2 = tf.random.truncatedNormal(
-            tf.constant(longArrayOf(5, 5, 32, 64)),
+            tf.constant(longArrayOf(5, 5, 32, 32)),
             Float::class.javaObjectType,
             TruncatedNormal.seed(SEED)
         )
 
-        val conv2Weights: Variable<Float> =
-            tf.variable(Shape.make(5, 5, 32, 64), Float::class.javaObjectType)
+        val conv12WeightsInit = tf.assign(conv12Weights, tf.math.mul(truncatedNormal2, tf.constant(0.01f)))
 
-        val conv2WeightsInit = tf.assign(conv2Weights, tf.math.mul(truncatedNormal2, tf.constant(0.1f)))
-
-        val conv2 = tf.nn.conv2d(
-            pool1, conv2Weights, mutableListOf(1L, 1L, 1L, 1L),
+        val conv12 = tf.nn.conv2d(
+            relu11, conv12Weights, mutableListOf(1L, 1L, 1L, 1L),
             PADDING_TYPE
         )
 
-        val conv2Biases: Variable<Float> = tf.variable(Shape.make(64), Float::class.javaObjectType)
+        val conv12Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
 
-        val conv2BiasesInit = tf.assign(
-            conv2Biases, tf.zeros(
+        val conv12BiasesInit = tf.assign(
+            conv12Biases, tf.zeros(
                 constArray(
                     tf,
-                    64
+                    32
                 ), Float::class.javaObjectType
             )
         )
 
-        val relu2 = tf.nn.relu(tf.nn.biasAdd(conv2, conv2Biases))
+        val relu12 = tf.nn.relu(tf.math.add(images, tf.nn.biasAdd(conv12, conv12Biases)))
+
+        // First pooling layer
+        val pool1 = tf.nn.maxPool(
+            relu12,
+            tf.constant(intArrayOf(1, 2, 2, 1)),
+            tf.constant(intArrayOf(1, 2, 2, 1)),
+            PADDING_TYPE
+        )
+
+        // Second conv block
+
+        val conv21Weights: Variable<Float> =
+            tf.variable(Shape.make(5, 5, 32, 32), Float::class.javaObjectType)
+
+        // Generate random data to fill the weight matrix
+        val truncatedNormal3 = tf.random.truncatedNormal(
+            tf.constant(longArrayOf(5, 5, 32, 32)),
+            Float::class.javaObjectType,
+            TruncatedNormal.seed(SEED)
+        )
+
+        val conv21WeightsInit = tf.assign(conv21Weights, tf.math.mul(truncatedNormal3, tf.constant(0.1f)))
+
+        val conv21 = tf.nn.conv2d(
+            pool1, conv21Weights, mutableListOf(1L, 1L, 1L, 1L),
+            PADDING_TYPE
+        )
+
+        val conv21Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
+
+        val conv21BiasesInit = tf.assign(
+            conv21Biases, tf.zeros(
+                constArray(
+                    tf,
+                    32
+                ), Float::class.javaObjectType
+            )
+        )
+
+        val relu21 = tf.nn.relu(tf.nn.biasAdd(conv21, conv21Biases))
+
+
+        val conv22Weights: Variable<Float> =
+            tf.variable(Shape.make(5, 5, 32, 32), Float::class.javaObjectType)
+
+
+        // Generate random data to fill the weight matrix
+        val truncatedNormal4 = tf.random.truncatedNormal(
+            tf.constant(longArrayOf(5, 5, 32, 32)),
+            Float::class.javaObjectType,
+            TruncatedNormal.seed(SEED)
+        )
+        val conv22WeightsInit = tf.assign(conv22Weights, tf.math.mul(truncatedNormal4, tf.constant(0.01f)))
+
+        val conv22 = tf.nn.conv2d(
+            relu21, conv22Weights, mutableListOf(1L, 1L, 1L, 1L),
+            PADDING_TYPE
+        )
+
+        val conv22Biases: Variable<Float> = tf.variable(Shape.make(32), Float::class.javaObjectType)
+
+        val conv22BiasesInit = tf.assign(
+            conv22Biases, tf.zeros(
+                constArray(
+                    tf,
+                    32
+                ), Float::class.javaObjectType
+            )
+        )
+
+        val relu22 = tf.nn.relu(tf.math.add(pool1, tf.nn.biasAdd(conv22, conv22Biases)))
 
         // Second pooling layer
         val pool2 = tf.nn.maxPool(
-            relu2,
+            relu22,
             tf.constant(intArrayOf(1, 2, 2, 1)),
             tf.constant(intArrayOf(1, 2, 2, 1)),
             PADDING_TYPE
@@ -148,16 +220,16 @@ fun main() {
         )
 
         // Fully connected layer
-        val truncatedNormal3 = tf.random.truncatedNormal(
-            tf.constant(longArrayOf(IMAGE_SIZE * IMAGE_SIZE * 4, 512)),
+        val truncatedNormal5 = tf.random.truncatedNormal(
+            tf.constant(longArrayOf(IMAGE_SIZE * IMAGE_SIZE * 2, 512)),
             Float::class.javaObjectType,
             TruncatedNormal.seed(SEED)
         )
 
         val fc1Weights: Variable<Float> =
-            tf.variable(Shape.make(IMAGE_SIZE * IMAGE_SIZE * 4, 512), Float::class.javaObjectType)
+            tf.variable(Shape.make(IMAGE_SIZE * IMAGE_SIZE * 2, 512), Float::class.javaObjectType)
 
-        val fc1WeightsInit = tf.assign(fc1Weights, tf.math.mul(truncatedNormal3, tf.constant(0.1f)))
+        val fc1WeightsInit = tf.assign(fc1Weights, tf.math.mul(truncatedNormal5, tf.constant(0.1f)))
 
         val fc1Biases: Variable<Float> = tf.variable(Shape.make(512), Float::class.javaObjectType)
 
@@ -166,7 +238,7 @@ fun main() {
         val relu3 = tf.nn.relu(tf.math.add(tf.linalg.matMul(flatten, fc1Weights), fc1Biases))
 
         // Softmax layer
-        val truncatedNormal4 = tf.random.truncatedNormal(
+        val truncatedNormal6 = tf.random.truncatedNormal(
             tf.constant(longArrayOf(512, NUM_LABELS)),
             Float::class.javaObjectType,
             TruncatedNormal.seed(SEED)
@@ -175,7 +247,7 @@ fun main() {
         val fc2Weights: Variable<Float> =
             tf.variable(Shape.make(512, NUM_LABELS), Float::class.javaObjectType)
 
-        val fc2WeightsInit = tf.assign(fc2Weights, tf.math.mul(truncatedNormal4, tf.constant(0.1f)))
+        val fc2WeightsInit = tf.assign(fc2Weights, tf.math.mul(truncatedNormal6, tf.constant(0.1f)))
 
         val fc2Biases: Variable<Float> = tf.variable(Shape.make(NUM_LABELS), Float::class.javaObjectType)
 
@@ -195,7 +267,20 @@ fun main() {
         val learningRate = tf.constant(LEARNING_RATE)
 
         val variables =
-            listOf(conv1Weights, conv1Biases, conv2Weights, conv2Biases, fc1Weights, fc1Biases, fc2Weights, fc2Biases)
+            listOf(
+                conv11Weights,
+                conv11Biases,
+                conv21Weights,
+                conv21Biases,
+                conv12Weights,
+                conv12Biases,
+                conv22Weights,
+                conv22Biases,
+                fc1Weights,
+                fc1Biases,
+                fc2Weights,
+                fc2Biases
+            )
 
         val gradients = tf.gradients(loss, variables)
 
@@ -205,8 +290,10 @@ fun main() {
         }
 
         val variablesInit = listOf(
-            conv1WeightsInit, conv1BiasesInit, conv2WeightsInit, conv2BiasesInit,
-            fc1WeightsInit, fc1BiasesInit, fc2WeightsInit, fc2BiasesInit)
+            conv11WeightsInit, conv11BiasesInit, conv21WeightsInit, conv21BiasesInit,
+            conv12WeightsInit, conv12BiasesInit, conv22WeightsInit, conv22BiasesInit,
+            fc1WeightsInit, fc1BiasesInit, fc2WeightsInit, fc2BiasesInit
+        )
 
         printTFGraph(graph)
 

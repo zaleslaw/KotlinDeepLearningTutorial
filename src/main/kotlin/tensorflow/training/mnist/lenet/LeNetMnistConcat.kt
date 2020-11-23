@@ -115,12 +115,38 @@ private fun LeNet(
     // Flatten inputs
     val flatten = flatten(tf, pool2)
 
+
+    // First conv layer
+    val (conv11Weights: Variable<Float>, conv11WeightsInit, conv11) = conv1Weights(tf, images)
+
+    val (conv11Biases: Variable<Float>, conv11BiasesInit) = conv1Biases(tf)
+
+    val relu11 = relu(tf, conv11, conv11Biases)
+
+    // First pooling layer
+    val pool11 = maxPool(tf, relu11)
+
+    // Second conv layer
+    val (conv21Weights: Variable<Float>, conv21WeightsInit, conv21) = conv2Weights(tf, pool11)
+
+    val (conv21Biases: Variable<Float>, conv21BiasesInit) = conv2Biases(tf)
+
+    val relu21 = relu(tf, conv21, conv21Biases)
+
+    // Second pooling layer
+    val pool21 = maxPool(tf, relu21)
+
+    // Flatten inputs
+    val flatten1 = flatten(tf, pool21)
+
+    val commonFlatten = tf.concat(mutableListOf(flatten, flatten1), tf.constant(-1))
+
     // Fully connected layer
     val (fc1Weights: Variable<Float>, fc1WeightsInit) = fc1Weights(tf)
 
     val (fc1Biases: Variable<Float>, fc1BiasesInit) = fc1Biases(tf)
 
-    val relu3 = tf.nn.relu(tf.math.add(tf.linalg.matMul(flatten, fc1Weights), fc1Biases))
+    val relu3 = tf.nn.relu(tf.math.add(tf.linalg.matMul(commonFlatten, fc1Weights), fc1Biases))
 
     // Softmax layer
     val (fc2Weights: Variable<Float>, fc2WeightsInit) = fc2Weights(tf)
@@ -213,12 +239,12 @@ private fun conv2Biases(tf: Ops): Pair<Variable<Float>, Assign<Float>> {
 }
 
 private fun fc1Weights(tf: Ops): Pair<Variable<Float>, Assign<Float>> {
-    val fc1Shape = longArrayOf(IMAGE_SIZE * IMAGE_SIZE * 4, 512)
+    val fc1Shape = longArrayOf(IMAGE_SIZE * IMAGE_SIZE * 4 * 2, 512)
 
     val truncatedNormal3 = truncatedNormal(tf, fc1Shape)
 
     val fc1Weights: Variable<Float> =
-        tf.variable(Shape.make(IMAGE_SIZE * IMAGE_SIZE * 4, 512), Float::class.javaObjectType)
+        tf.variable(Shape.make(IMAGE_SIZE * IMAGE_SIZE * 4 * 2, 512), Float::class.javaObjectType)
 
     val fc1WeightsInit = tf.assign(fc1Weights, tf.math.mul(truncatedNormal3, tf.constant(0.1f)))
     return Pair(fc1Weights, fc1WeightsInit)
