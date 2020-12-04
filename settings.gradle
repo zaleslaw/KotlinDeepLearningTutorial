@@ -1,2 +1,5 @@
 rootProject.name = 'KotlinDeepLearningTutorial'
-
+include("tensorflow2exp")
+include("tensorflow2official")
+include("tensorflow1")
+include("dl4j")

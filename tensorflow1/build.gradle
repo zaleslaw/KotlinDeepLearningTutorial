@@ -1,0 +1,4 @@
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.10"
+    compile group: 'org.tensorflow', name: 'tensorflow', version: '1.15.0'
+}
